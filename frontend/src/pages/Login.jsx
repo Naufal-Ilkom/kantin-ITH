@@ -20,7 +20,7 @@ const Login = () => {
       if (response.data.success) {
         const user = response.data.user;
 
-        if (user.role !== role) {
+        if (user.role !== role && user.role !== 'admin') {
           alert(`Akun Anda terdaftar sebagai ${user.role}, bukan ${role}.`);
           return;
         }
@@ -32,7 +32,6 @@ const Login = () => {
 
         alert('Login Berhasil!');
 
-        // Navigate sesuai role
         if (user.role === 'pembeli') {
           navigate('/pembeli/dashboard');
         } else if (user.role === 'penjual') {
@@ -112,12 +111,13 @@ const Login = () => {
             </button>
           </div>
 
+          {/* Hanya Pembeli dan Penjual — Admin login langsung tanpa pilihan role */}
           <div style={{ marginBottom: '35px' }}>
             <label style={{ display: 'block', marginBottom: '10px', fontWeight: '700', fontSize: '14px', color: '#555' }}>Masuk Sebagai:</label>
             <div style={{ 
               display: 'flex', background: '#f4f5f7', padding: '6px', borderRadius: '16px', gap: '5px' 
             }}>
-              {['pembeli', 'penjual', 'admin'].map((r) => (
+              {['pembeli', 'penjual'].map((r) => (
                 <button 
                   key={r}
                   type="button" 
@@ -130,7 +130,7 @@ const Login = () => {
                     boxShadow: role === r ? '0 4px 10px rgba(0,0,0,0.05)' : 'none',
                     textTransform: 'capitalize'
                   }}>
-                  {r}
+                  {r === 'pembeli' ? '🛒 Pembeli' : '🍽️ Penjual'}
                 </button>
               ))}
             </div>

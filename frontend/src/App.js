@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LandingPage from './pages/LandingPage.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import LupaPassword from './pages/LupaPassword.jsx';
@@ -46,11 +47,13 @@ function App() {
   return (
     <Router>
       <Routes>
+        {/* Landing Page — halaman utama */}
+        <Route path="/" element={<LandingPage />} />
+
         {/* Halaman Publik */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/lupa-password" element={<LupaPassword onGoToLogin={() => <Navigate to="/login" />} />} />
-        <Route path="/" element={<Navigate to="/login" replace />} />
 
         {/* ===== RUTE PEMBELI ===== */}
         <Route path="/pembeli/dashboard" element={
@@ -61,7 +64,6 @@ function App() {
           </ProtectedRoute>
         } />
 
-        {/* Route Detail Menu — tetap pakai AppLayout pembeli */}
         <Route path="/pembeli/menu/:id" element={
           <ProtectedRoute allowedRoles={['pembeli']}>
             <AppLayout role="pembeli" navigationItems={pembeliNavigationItems}>
@@ -141,7 +143,7 @@ function App() {
         <Route path="/admin/dashboard" element={<Navigate to="/admin/pengguna" replace />} />
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
