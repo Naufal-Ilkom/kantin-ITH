@@ -1,7 +1,5 @@
 # KantinITH — Regression Test Suite
 
-![CI Status](https://github.com/USERNAME/REPO/actions/workflows/test.yml/badge.svg)
-
 ## Cara Menjalankan Test
 
 ### Install dependencies
