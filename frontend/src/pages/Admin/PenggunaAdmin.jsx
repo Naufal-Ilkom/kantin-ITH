@@ -24,12 +24,13 @@ const PenggunaAdmin = () => {
       const response = await axios.get('http://localhost:5000/api/admin/users', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setPengguna(response.data);
-    } catch (err) {
-      console.error("Gagal mengambil data user:", err);
-      alert("Gagal mengambil data. Pastikan Anda login sebagai admin.");
-    }
-  };
+      console.log("Data dari backend:", response.data);
+      const activeUsers = response.data.filter(user => user.is_active !== 0);
+    setPengguna(activeUsers);
+  } catch (err) {
+    console.error("Gagal mengambil data user:", err);
+  }
+};
 
   const handleRowClick = (user) => {
     if (!isEditMode) return;
@@ -63,20 +64,21 @@ const PenggunaAdmin = () => {
     }
   };
 
-  const hapusPengguna = async (e, id) => {
-    e.stopPropagation();
-    if (!window.confirm("Apakah Anda yakin ingin menghapus permanen akun pengguna ini?")) return;
-    try {
-      const token = localStorage.getItem('accessToken');
-      await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchUsers();
-      alert("User berhasil dihapus!");
-    } catch (err) {
-      alert(err.response?.data?.message || "Gagal menghapus user");
-    }
-  };
+  const nonaktifkanPengguna = async (e, id) => {
+  e.stopPropagation();
+  if (!window.confirm("Apakah Anda yakin ingin menonaktifkan akun ini?")) return;
+  try {
+    const token = localStorage.getItem('accessToken');
+    // Asumsi kamu nanti membuat endpoint: PATCH /api/admin/users/:id/deactivate
+    await axios.delete(`http://localhost:5000/api/admin/users/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+    fetchUsers();
+    alert("User berhasil dinonaktifkan!");
+  } catch (err) {
+    alert(err.response?.data?.message || "Gagal menonaktifkan user");
+  }
+};
 
   const roleBadgeStyle = (role) => ({
     display: 'inline-block',
@@ -146,7 +148,8 @@ const PenggunaAdmin = () => {
                   <td><span style={statusStyle(user.status)}>{user.status || 'Aktif'}</span></td>
                   {isEditMode && (
                     <td style={{ textAlign: 'center' }}>
-                      <button onClick={(e) => hapusPengguna(e, user.id)} className="btn-hapus-row">Hapus</button>
+                      <button onClick={(e) => nonaktifkanPengguna(e, user.id)} className="btn-hapus-row"style={{ background: '#ef4444', color: 'white' }}>
+                        Nonaktifkan</button>
                     </td>
                   )}
                 </tr>
@@ -183,7 +186,9 @@ const PenggunaAdmin = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={statusStyle(user.status)}>{user.status || 'Aktif'}</span>
                   {isEditMode && (
-                    <button onClick={(e) => hapusPengguna(e, user.id)} className="btn-hapus-row">Hapus</button>
+                    <button onClick={(e) => nonaktifkanPengguna(e, user.id)} className="btn-hapus-row" style={{ background: '#ef4444', color: 'white' }}>
+                      Nonaktifkan
+                    </button>
                   )}
                 </div>
               </div>

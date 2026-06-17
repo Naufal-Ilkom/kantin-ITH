@@ -4,6 +4,7 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken'); 
 const crypto = require('crypto');
 const nodemailer = require('nodemailer'); 
+const { Op } = require('sequelize');
 
 // IMPORT LIBRARY KEAMANAN (TETAP DIIMPORT TAPI TIDAK DIPAKAI DULU)
 const rateLimit = require('express-rate-limit');
@@ -95,7 +96,7 @@ app.post('/api/login', async (req, res) => {
             return res.status(401).json({ success: false, message: 'Username dan password wajib diisi' });
         }
 
-        const user = await User.findOne({ where: { username, password } });
+        const user = await User.findOne({ where: { username, password, is_active: 1 } });
 
         if (user) {
             if (user.status === 'Nonaktif') {
@@ -435,16 +436,37 @@ app.put('/api/users/update-saldo/:id', verifyToken, async (req, res) => {
 app.get('/api/admin/users', verifyToken, async (req, res) => {
     try {
         if (req.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: "Akses ditolak! Hanya admin yang bisa mengakses." });
+            return res.status(403).json({ success: false, message: "Akses ditolak!" });
         }
 
         const users = await User.findAll({
-            attributes: ['id', 'username', 'role', 'status', 'saldo']
+            // Pastikan menggunakan Op.ne (Not Equal)
+            where: { is_active: { [Op.ne]: 0 } }, 
+            attributes: ['id', 'username', 'role', 'status', 'saldo', 'is_active']
         });
         res.json(users);
     } catch (err) {
-        console.error("Error get all users:", err);
-        res.status(500).json({ success: false, message: "Gagal mengambil data pengguna" });
+        console.error("Error get all users:", err); // Pesan ini akan muncul di terminalmu
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+app.patch('/api/admin/users/:id/deactivate', verifyToken, async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ success: false, message: "Akses ditolak! Hanya admin." });
+        }
+
+        const user = await User.findByPk(req.params.id);
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User tidak ditemukan" });
+        }
+
+        await User.update({ is_active: 0 }, { where: { id: req.params.id } });
+        res.json({ success: true, message: "User berhasil dinonaktifkan!" });
+    } catch (err) {
+        console.error("Error deactivate user:", err);
+        res.status(500).json({ success: false, message: "Gagal menonaktifkan user" });
     }
 });
 
@@ -490,23 +512,14 @@ app.patch('/api/admin/users/:id/saldo', verifyToken, async (req, res) => {
     }
 });
 
+// PASTIKAN BLOK INI SEPERTI INI DI index.js
 app.delete('/api/admin/users/:id', verifyToken, async (req, res) => {
     try {
-        if (req.user.role !== 'admin') {
-            return res.status(403).json({ success: false, message: "Akses ditolak! Hanya admin yang bisa mengakses." });
-        }
-
-        const user = await User.findByPk(req.params.id);
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User tidak ditemukan" });
-        }
-
-        await User.destroy({ where: { id: req.params.id } });
-        res.json({ success: true, message: "User berhasil dihapus!" });
+        // Kita gunakan logic update (soft delete) di dalam route DELETE
+        await User.update({ is_active: 0 }, { where: { id: req.params.id } });
+        res.json({ success: true, message: "User berhasil dinonaktifkan!" });
     } catch (err) {
-        console.error("Error delete user:", err);
-        res.status(500).json({ success: false, message: "Gagal menghapus user" });
+        res.status(500).json({ success: false, message: "Gagal menonaktifkan user" });
     }
 });
 

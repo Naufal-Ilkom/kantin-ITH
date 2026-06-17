@@ -38,6 +38,10 @@ const User = sequelize.define('User', {
     refresh_token: {
         type: DataTypes.STRING,
         allowNull: true
+    },
+    is_active: {
+        type: DataTypes.TINYINT, // atau DataTypes.BOOLEAN
+        defaultValue: 1
     }
 }, {
     tableName: 'users', // Nama tabel di MySQL
