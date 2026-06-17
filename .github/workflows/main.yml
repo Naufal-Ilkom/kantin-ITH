@@ -1,0 +1,55 @@
+name: Backend CI Tests
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # 1. Menambahkan layanan database MySQL
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: kantin_test_db # Nama database untuk testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      working-directory: ./backend
+      run: npm install
+
+    # 2. Memberikan variabel lingkungan (.env) agar aplikasi bisa terhubung ke MySQL di GitHub
+    - name: Run automated tests with coverage
+      working-directory: ./backend
+      env:
+        DB_HOST: 127.0.0.1
+        DB_USER: root
+        DB_PASSWORD: rootpassword
+        DB_NAME: kantin_test_db
+        DB_PORT: 3306
+        JWT_SECRET: secret_key_untuk_testing_saja # Tambahkan jika kamu pakai JWT
+      run: npm run test:coverage -- --runInBand
